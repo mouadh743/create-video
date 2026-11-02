@@ -23,6 +23,7 @@ from make_video import (BOOK_SUB, BOOK_TITLE, BRIGHT, FONT_AR_BOLD, FONT_AR_DISP
 
 CW, CH = 2550, 3300            # 8.5 x 11 in at 300 dpi
 OUT = ROOT / "output" / "covers"
+QR = ROOT / "assets" / "instagram_qr.png"   # Instagram QR code for @_happy.life.store
 STORE_DIR = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / "happy_store"
 
 NATURE_TITLE = "ملاذ الطبيعة"            # Nature Escape
@@ -87,6 +88,18 @@ def paper_texture(w, h, base, seed=7, amount=10):
     return Image.fromarray(img.clip(0, 255).astype(np.uint8))
 
 
+def place_qr(canvas, x, y, size):
+    """Instagram QR code on a white rounded card, top-left corner at (x, y)."""
+    qr = Image.open(QR).convert("RGB").resize((size, size), Image.LANCZOS)
+    pad = size // 14
+    card = Image.new("RGB", (size + 2 * pad, size + 2 * pad), (255, 255, 255))
+    card.paste(qr, (pad, pad))
+    box = (x, y, x + card.width, y + card.height)
+    drop_shadow(canvas, box, 28, 18, 0.35, offset=(0, 10))
+    card = rounded(card, 28)
+    canvas.paste(card, (x, y), card)
+
+
 def text_center(d, xy, s, f, fill, **kw):
     d.text(xy, s, font=f, anchor="mm", fill=fill, **kw)
 
@@ -144,6 +157,7 @@ def cover_mandala():
     # store footer
     text_center(d, (CW / 2, 3010), STORE, font(FONT_AR_DISPLAY, 130), (252, 240, 214))
     text_center(d, (CW / 2, 3150), HANDLE, font(FONT_AR_BOLD, 58), (*gold, 255))
+    place_qr(c, 130, 2895, 290)
     return c
 
 
@@ -267,10 +281,11 @@ def cover_nature():
     place_pencil(c, (128, 200, 158), (CW / 2 - 640, 2500), 150, 900, 66)
 
     d = ImageDraw.Draw(c, "RGBA")
-    d.rounded_rectangle([520, 2780, CW - 520, 2900], 60, fill=(*green, 235))
+    d.rounded_rectangle([640, 2780, CW - 640, 2900], 60, fill=(*green, 235))
     text_center(d, (CW / 2, 2838), NATURE_BADGE, font(FONT_AR_BOLD, 66), (252, 246, 234))
     text_center(d, (CW / 2, 3040), STORE, font(FONT_AR_DISPLAY, 120), green)
     text_center(d, (CW / 2, 3160), HANDLE, font(FONT_AR_BOLD, 58), ink)
+    place_qr(c, 110, 2830, 340)
     return c
 
 

@@ -46,7 +46,7 @@ Front covers for both coloring books, print size (8.5 × 11 in at 300 dpi, 2550�
 | ماندالا الزهور – كتاب تلوين للكبار | [`output/covers/floral_mandalas_cover.png`](output/covers/floral_mandalas_cover.png) |
 | ملاذ الطبيعة – Nature Escape (the three scenes from the happy_store site) | [`output/covers/nature_escape_cover.png`](output/covers/nature_escape_cover.png) |
 
-All cover text is in Arabic. Each cover shows the art half colored and half line art, with a colored pencil on the edge between them.
+All cover text is in Arabic, and the Instagram QR code (`assets/instagram_qr.png`) sits in the bottom-left corner. Each cover shows the art half colored and half line art, with a colored pencil on the edge between them.
 
 ```bash
 python3 make_cover.py ../happy_store   # path to the happy_store repo (for the Nature Escape pages)
