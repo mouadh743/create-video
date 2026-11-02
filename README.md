@@ -29,7 +29,7 @@ Fonts in `fonts/` (Cairo and Amiri) come from Google Fonts under the SIL Open Fo
 
 **Video:** [`output/coloring_clip_promo.mp4`](output/coloring_clip_promo.mp4) (1080×1920, ~9.5 s, with the clip's own sound)
 
-This video puts the supplied clip (`clips/coloring_clip.mp4`, where a mosque drawing fills with color) into a 9:16 frame over a blurred background. It adds the Arabic store tag and the caption "من الأبيض والأسود… إلى لوحة ملوّنة", then ends on the store name and the Instagram and TikTok handles.
+This video puts the supplied clip (`clips/coloring_clip.mp4`, where a mosque drawing fills with color) into a 9:16 frame over a blurred background. A shaded hand holding a colored pencil (`hand.py`) moves over the page and follows wherever new color appears, so it looks like it is doing the coloring. The pencil takes the color of the spot it is coloring. It adds the Arabic store tag and the caption "من الأبيض والأسود… إلى لوحة ملوّنة", then ends on the store name and the Instagram and TikTok handles.
 
 ```bash
 python3 make_video2.py clips/coloring_clip.mp4

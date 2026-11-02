@@ -4,12 +4,15 @@
 Usage:  python3 make_video2.py clips/coloring_clip.mp4
 Output: output/coloring_clip_promo.mp4  (1080x1920, 30 fps, keeps the clip's audio)
 """
+import math
 import subprocess
 import sys
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
+
+from hand import HandRig
 
 from make_video import (FONT_AR_BOLD, FONT_AR_DISPLAY, FONT_SANS, FPS, H, HANDLE, STORE, W, Writer,
                         brand_tag, smooth, social_icon)
@@ -62,6 +65,44 @@ def compose(frame, zoom=1.0):
     return bg
 
 
+def track_coloring(path):
+    """Follow where new color appears in the clip, so the hand can 'paint' there.
+
+    Returns per-frame (x, y) pencil-tip positions in clip pixels, a 0..1 'busy' value
+    (how much is being colored), and the clip's final frame for sampling pencil colors.
+    """
+    lows = [np.asarray(f.resize((f.width // 4, f.height // 4), Image.BILINEAR), np.float32)
+            for f in read_frames(path)]
+    sats = [lo.max(axis=2) - lo.min(axis=2) for lo in lows]
+    lh, lw = sats[0].shape
+    yy, xx = np.mgrid[0:lh, 0:lw]
+    pos = np.array([0.45 * lw, 0.52 * lh]); vel = np.zeros(2); goal = pos.copy()
+    out, busy = [], []
+    b = 0.0
+    for i, s in enumerate(sats):
+        diff = np.clip(s - sats[max(i - 3, 0)] - 8, 0, None)
+        if diff.sum() > 400:
+            g = np.array([(diff * xx).sum(), (diff * yy).sum()]) / diff.sum()
+            goal = np.clip(g, [0.12 * lw, 0.10 * lh], [0.85 * lw, 0.85 * lh])
+            b = min(1.0, b + 0.08)
+        else:
+            b = max(0.0, b - 0.05)
+        vel = vel * 0.80 + (goal - pos) * 0.04
+        pos = pos + vel
+        out.append(pos * 4)
+        busy.append(b)
+    return out, busy, lows[-1]
+
+
+def pencil_color(final_low, xy):
+    x, y = int(xy[0] / 4), int(xy[1] / 4)
+    h, w = final_low.shape[:2]
+    patch = final_low[max(y - 3, 0):min(y + 4, h), max(x - 3, 0):min(x + 4, w)].reshape(-1, 3)
+    c = patch.mean(axis=0) if len(patch) else np.array([200, 120, 100], np.float32)
+    c = c.mean() + (c - c.mean()) * 1.6
+    return np.clip(c * 0.88, 30, 235)
+
+
 def caption(frame, alpha):
     if alpha <= 0:
         return frame
@@ -106,12 +147,40 @@ def main():
     src = Path(sys.argv[1] if len(sys.argv) > 1 else ROOT / "clips" / "coloring_clip.mp4")
     out = ROOT / "output" / "coloring_clip_promo.mp4"
     silent = ROOT / "output" / "_video2_silent.mp4"
+    print("tracking the coloring...")
+    path, busy, final_low = track_coloring(src)
+    print("drawing the hand...")
+    rig = HandRig()
+    scale = CLIP_W / final_low.shape[1] / 4
+    clip_frames = len(path)
+    clip_seconds_est = clip_frames / FPS
+    color = pencil_color(final_low, path[0])
+
+    def hand_at(img, i, t):
+        nonlocal color
+        j = min(i, clip_frames - 1)
+        x, y = path[j]
+        tx, ty = 40 + x * scale, CLIP_TOP + y * scale
+        amp = busy[j] if i < clip_frames else 0.0
+        tx += amp * (13 * math.sin(2 * math.pi * 4.2 * t) + 4 * math.sin(2 * math.pi * 1.7 * t))
+        ty += amp * (-6 * math.sin(2 * math.pi * 4.2 * t) + 5 * math.sin(2 * math.pi * 1.3 * t))
+        enter = 1 - smooth(t / 0.8)
+        leave = smooth((t - clip_seconds_est + 0.3) / 0.8)
+        off = max(enter, leave)
+        if off >= 1:
+            return img
+        tx, ty = tx + 700 * off, ty + 820 * off
+        color = color * 0.85 + pencil_color(final_low, path[j]) * 0.15
+        angle = 2.5 * math.sin(2 * math.pi * 0.55 * t) - 3 * amp * math.sin(2 * math.pi * 4.2 * t) * 0.3
+        return rig.place(img, (tx, ty), color, angle)
+
     writer = Writer(silent)
     n = 0
     last = None
     for frame in read_frames(src):
         t = n / FPS
         img = compose(frame)
+        img = hand_at(img, n, t)
         img = brand_tag(img, smooth((t - 0.2) / 0.5))
         img = caption(img, smooth((t - 0.4) / 0.5) * (1 - smooth((t - 2.6) / 0.5)))
         if t < 0.4:
@@ -122,6 +191,7 @@ def main():
     for i in range(int(END_SECONDS * FPS)):
         t = i / FPS
         img = compose(last, zoom=1.0 + 0.04 * smooth(t / END_SECONDS))
+        img = hand_at(img, n + i, (n + i) / FPS)
         img = brand_tag(img, 1.0)
         img = end_card(img, smooth((t - 0.1) / 0.7), smooth((t - 0.8) / 0.7))
         writer.write(img)
