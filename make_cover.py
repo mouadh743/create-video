@@ -2,7 +2,7 @@
 """Front covers for the two Happy Life Store coloring books.
 
   1. ماندالا الزهور (Floral Mandalas) - Arabic adult coloring book, pages in pages/
-  2. Nature Escape - the three scenes sold in the happy_store site
+  2. ملاذ الطبيعة (Nature Escape) - the three scenes sold in the happy_store site
 
 Each cover shows its art half colored and half line art, so buyers see what the
 pages look like before and after coloring.
@@ -25,8 +25,9 @@ CW, CH = 2550, 3300            # 8.5 x 11 in at 300 dpi
 OUT = ROOT / "output" / "covers"
 STORE_DIR = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / "happy_store"
 
-NATURE_TITLE = "Nature Escape"
-NATURE_SUB = "A colouring book of quiet places"
+NATURE_TITLE = "ملاذ الطبيعة"            # Nature Escape
+NATURE_SUB = "كتاب تلوين لأماكن هادئة"   # A colouring book of quiet places
+NATURE_BADGE = "٣ رسومات  •  من السهل إلى المفصّل"  # 3 scenes - easy to detailed
 NATURE_PAGES = [("treehouse-hideaway", "treehouse.webp"),
                 ("hidden-waterfall", "waterfall.webp"),
                 ("mountain-lake-sunrise", "mountain-lake.webp")]
@@ -252,8 +253,8 @@ def cover_nature():
     d = ImageDraw.Draw(c, "RGBA")
 
     green, ink = (58, 104, 70), (44, 52, 48)
-    text_center(d, (CW / 2, 330), NATURE_TITLE, font(FONT_AR_DISPLAY, 270), green)
-    text_center(d, (CW / 2, 560), NATURE_SUB.upper(), font(FONT_AR_BOLD, 74), ink)
+    text_center(d, (CW / 2, 330), NATURE_TITLE, font(FONT_AR_DISPLAY, 290), green)
+    text_center(d, (CW / 2, 560), NATURE_SUB, font(FONT_AR_BOLD, 96), ink)
     d.line([CW / 2 - 520, 650, CW / 2 + 520, 650], fill=(*green, 160), width=4)
 
     # three scenes as tilted cards: waterfall in front
@@ -267,8 +268,8 @@ def cover_nature():
 
     d = ImageDraw.Draw(c, "RGBA")
     d.rounded_rectangle([520, 2780, CW - 520, 2900], 60, fill=(*green, 235))
-    text_center(d, (CW / 2, 2838), "3 SCENES  •  EASY TO DETAILED", font(FONT_AR_BOLD, 60), (252, 246, 234))
-    text_center(d, (CW / 2, 3040), "Happy Life Store  •  " + STORE, font(FONT_AR_BOLD, 84), green)
+    text_center(d, (CW / 2, 2838), NATURE_BADGE, font(FONT_AR_BOLD, 66), (252, 246, 234))
+    text_center(d, (CW / 2, 3040), STORE, font(FONT_AR_DISPLAY, 120), green)
     text_center(d, (CW / 2, 3160), HANDLE, font(FONT_AR_BOLD, 58), ink)
     return c
 
